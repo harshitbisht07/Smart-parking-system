@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Smart Parking — GEHU Bhimtal</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --bg:#0f0f10;
+      --fg:#f5f5f5;
+      --muted:#bdbdbd;
+      --card:#161718;
+      --line:#2a2b2d;
+      --accent:#ffffff;
+      --success:#1a7f3a;
+      --error:#ff6b6b;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font:14px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+    }
+    header{
+      position:sticky;
+      top:0;
+      backdrop-filter:saturate(120%) blur(6px);
+      background:rgba(15,15,16,0.8);
+      border-bottom:1px solid var(--line);
+      z-index:10;
+    }
+    .bar{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;}
+    .brand{font-weight:600;letter-spacing:0.3px;}
+    .nav{display:flex;gap:10px;}
+    .nav button{
+      background:transparent;
+      border:0;
+      padding:6px 12px;
+      border-radius:6px;
+      color:var(--muted);
+      cursor:pointer;
+      font:inherit;
+    }
+    .nav button.active{
+      background:var(--line);
+      color:var(--fg);
+    }
+    main{
+      max-width:1100px;
+      margin:24px auto;
+      padding:0 18px;
+      display:grid;
+      gap:18px;
+      grid-template-columns:1fr;
+    }
+    @media(min-width:900px){ main{ grid-template-columns:1fr 1fr; } }
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:10px;
+      padding:20px;
+    }
+    .card h2{margin:0 0 14px;font-size:16px;font-weight:600;}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+    input,select{
+      width:100%;
+      background:#1a1b1d;
+      border:1px solid var(--line);
+      border-radius:6px;
+      padding:9px 12px;
+      color:var(--fg);
+      font:inherit;
+    }
+    input:focus,select:focus{outline:none;border-color:#3a3b3d;}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+    .note{font-size:12px;color:var(--muted);margin-top:8px;}
+    button.primary{
+      width:100%;
+      background:var(--accent);
+      color:#000;
+      border:0;
+      padding:10px;
+      border-radius:6px;
+      font:inherit;
+      font-weight:600;
+      cursor:pointer;
+      margin-top:8px;
+    }
+    button.primary:hover{opacity:0.9;}
+    button.primary:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+    .spots{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px;}
+    @media(min-width:900px){ .spots{grid-template-columns:repeat(3,1fr);} }
+    .area-card{
+      background:transparent;
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:12px;
+      min-height:120px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .area-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);}
+    .boxes{display:flex;flex-wrap:wrap;gap:6px;}
+    .box{
+      width:28px;
+      height:20px;
+      border-radius:4px;
+      background:#0b0b0b;
+      border:1px solid var(--line);
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:10px;color:var(--muted);
+      cursor:default;
+      transition:transform .12s,background .12s,border-color .12s;
+    }
+    .box.occupied{background:var(--success);border-color:#2e9b52;color:#000;font-weight:600;transform:scale(1.05);}    
+    .spot{aspect-ratio:1;border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;cursor:pointer;transition:transform 0.2s;}
+    .spot.free{background:#0a2e1a;border-color:#1a5a2f;}
+    .spot.occupied{background:#2e0a0a;border-color:#5a1a1a;}
+    .spot.held{background:#2e2a0a;border-color:#5a4f1a;}
+    .spot:hover{transform:scale(1.05);}
+    .spot-label{font-weight:600;}
+    .spot-type{font-size:9px;text-transform:uppercase;color:var(--muted);margin-top:2px;}
+    .info-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;}
+    .info-row span:first-child{color:var(--muted);}
+    button.secondary{
+      background:var(--card);
+      border:1px solid var(--line);
+      color:var(--fg);
+      padding:8px 16px;
+      border-radius:6px;
+      cursor:pointer;
+      font:inherit;
+    }
+    button.secondary:hover{background:var(--line);}
+    .footer{text-align:center;padding:20px;font-size:12px;color:var(--muted);}    
+    .field-row{position:relative;margin-bottom:12px;}
+    .error-text{color:var(--error);font-size:12px;margin-top:6px;display:none;}
+
+
+    /* Map container styling */
+    #map{width:100%;height:320px;border-radius:8px;border:1px solid var(--line);}
+    .map-actions{display:flex;gap:8px;margin-top:8px;}
+    .map-actions a{display:inline-block;padding:8px 10px;border-radius:6px;background:var(--card);border:1px solid var(--line);color:var(--fg);text-decoration:none;font:inherit}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div class="brand">Smart Parking</div>
+      <div class="nav">
+        <button id="btnBooking" class="active">Booking</button>
+        <button id="btnadmin">admin</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Booking Section (unchanged behavior) -->
+    <div id="sectionBooking" class="card">
+      <h2>Book a Slot</h2>
+      <div class="field-row">
+        <label for="bookingName">Name</label>
+        <input type="text" id="bookingName" placeholder="Enter your name" autocomplete="name">
+        <div id="errName" class="error-text">Please enter your name.</div>
+      </div>
+      <div class="field-row">
+        <label for="bookingVehicle">Vehicle number</label>
+        <input type="text" id="bookingVehicle" placeholder="Enter Vehicle number" autocomplete="off">
+        <div id="errVehicle" class="error-text">Please enter your vehicle number.</div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="bookingType">Type</label>
+          <select id="bookingType">
+            <option value="car">Car</option>
+            <option value="bike">Bike</option>
+            <option value="ev">EV</option>
+          </select>
+        </div>
+        <div>
+          <label for="bookingArea">Parking Area</label>
+          <select id="bookingArea">
+            <option value="campus">Campus</option>
+            <option value="gate1">Gate1</option>
+            <option value="gate2">Gate2</option>
+          </select>
+        </div>
+      </div>
+      <div class="note">Live availability updates every 10s</div>
+      <button class="primary" id="btnReserve" disabled>Reserve Slot</button>
+
+      <!-- Simplified Available Spots display: only area counts (out of 10) -->
+      <div style="margin-top:20px;">
+        <strong>Available Spots:</strong>
+        <div class="info-row"><span>Campus: <span id="available-campus">10/10</span></span></div>
+        <div class="info-row"><span>Gate1: <span id="available-gate1">10/10</span></span></div>
+        <div class="info-row"><span>Gate2: <span id="available-gate2">10/10</span></span></div>
+      </div>
+    </div>
+
+    <!-- Ticket -->
+    <div id="sectionTicket" class="card">
+      <h2>Ticket & Entry</h2>
+      <div id="ticketContent" style="display:none;">
+        <div class="info-row"><span>Name</span><span id="ticketName">—</span></div>
+        <div class="info-row"><span>Ticket ID</span><span id="ticketId">—</span></div>
+        <div class="info-row"><span>Spot</span><span id="ticketSpot">—</span></div>
+        <div class="info-row"><span>Vehicle</span><span id="ticketVehicle">—</span></div>
+        <div class="info-row"><span>Vehicle Type</span><span id="ticketType">—</span></div>
+        <div class="info-row"><span>Status</span><span id="ticketStatus">Not Entered</span></div>
+        <div class="info-row"><span>Valid until</span><span id="ticketExpiry">—</span></div>
+        <div id="ticketQR" style="margin-top:16px;text-align:center;"></div>
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <!-- Mark Entry / Exit kept in HTML but will be visible only to admin via JS -->
+          <button class="secondary" id="btnMarkEntry">Mark Entry</button>
+          <button class="secondary" id="btnMarkExit">Mark Exit</button>
+        </div>
+        <!-- Download QR button added -->
+        <div style="margin-top:12px;text-align:center;">
+          <button class="secondary" id="btnDownloadTicket">Download Ticket (QR)</button>
+        </div>
+      </div>
+      <div id="noTicket" style="text-align:center;color:var(--muted);padding:40px 0;">
+        No active ticket for this session.
+      </div>
+    </div>
+
+    <!-- admin Section -->
+    <div id="sectionadmin" class="card" style="display:none;">
+      <h2>admin</h2>
+      <label for="adminInput">Scan Ticket ID / QR Code</label>
+      <input type="text" id="adminInput" placeholder="Enter ticket ID">
+      <button class="primary" id="btnScan">Scan & Verify</button>
+      <div id="scanResult" style="margin-top:16px;display:none;">
+        <div class="info-row"><span>Vehicle</span><span id="scanVehicle">—</span></div>
+        <div class="info-row"><span>Spot</span><span id="scanSpot">—</span></div>
+        <div class="info-row"><span>Status</span><span id="scanStatus">—</span></div>
+      </div>
+    </div>
+
+    <!-- Records & Report Download [ADDED CARD] -->
+    <div id="adminNotificationsCard" class="card" style="display:none; grid-column:1/-1;">
+      <h2>Recent Notifications</h2>
+      <div id="adminNotifications"></div>
+      <button class="primary" id="btnDownloadReport" style="margin-top:16px;">Download Report</button>
+    </div>
+
+    <!-- Live Spot View: split into 3 areas with 10 boxes each -->
+    <div class="card" style="grid-column:1/-1;">
+      <h2>Live Spot View</h2>
+      <div class="spots" id="spotsGrid">
+        <div class="area-card" data-area="campus">
+          <div class="area-head"><div>Campus</div><div class="area-count" id="count-campus">0/10</div></div>
+          <div class="boxes" id="boxes-campus"></div>
+        </div>
+        <div class="area-card" data-area="gate1">
+          <div class="area-head"><div>Gate1</div><div class="area-count" id="count-gate1">0/10</div></div>
+          <div class="boxes" id="boxes-gate1"></div>
+        </div>
+        <div class="area-card" data-area="gate2">
+          <div class="area-head"><div>Gate2</div><div class="area-count" id="count-gate2">0/10</div></div>
+          <div class="boxes" id="boxes-gate2"></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="footer">
+    Monochrome UI • QR-based access • DSA-backed allocation
+    <div style="margin-top: 10px;">
+      <button id="btnClearDatabase" class="secondary">Clear Database</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
