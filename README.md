@@ -2,6 +2,8 @@
 
 Welcome to the Smart Parking System project! This web-based system allows easy vehicle parking bookings with QR code tickets, live parking spot tracking, and an admin panel for management. It is designed for use in college offices, campuses, and similar environments to simplify parking operations.
 
+
+### Website link: https://harshitbisht07.github.io/Smart-parking-system/
 ---
 
 ## 🎯 Features
